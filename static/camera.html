@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<title>Visual for MIT</title>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="style_for_all.css">
+	<link rel="stylesheet" href="css/style_for_camera.css">
+	<script src="js/js_for_camera.js"></script>
+	<!-- For icons -->
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+	
+</head>
+<body>
+	<div class="background-image"></div> <!-- We can put modification on the background easier like that -->
+
+	<header>
+		<ul class="header">
+			<li><a href="home.html"><i class="fa fa-home"></i></a></li>
+			<li><a href="camera.html"><i class="fa fa-video-camera"></i></a></li>
+		</ul>
+	</header>
+
+
+	<main-content>
+		<div class="titre">Camera from USA</div>
+
+		<div class="list_picture">
+			<img id="cat" src="picture/cat.jpg" alt="cat" onclick="TakeMain('cat')">
+			<img id="digital" src="picture/digital.jpg" alt="digital" onclick="TakeMain('digital')">
+			<img id="hacker" src="picture/hacker.jpg" alt="hacker" onclick="TakeMain('hacker')">
+			<img id="phone" src="picture/phone.jpg" alt="phone" onclick="TakeMain('phone')">
+		</div>
+		
+		<img id="main_picture" src="picture/cat.jpg" class="main_window" >
+
+		<div class="input">
+
+			<input id="saisie_text" type="text" name="url" placeholder="New url">
+			<input type="button" name="load" value="Load" onclick="getElementById('main_picture').src = getElementById('saisie_text').value">
+
+		</div>
+	</main-content>
+
+
+	<footer>
+		<p>picture of the team</p>
+	</footer>
+	
+
+</body>
+</html>
