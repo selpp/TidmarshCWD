@@ -19,37 +19,39 @@ main-content div.titre{
 
 main-content div.list_picture{
 	position: relative;
-	display: inline-block;
 
+	height: auto;
 	width: 100%;
 	margin: 0 auto;
 	text-align: center;
 	top: 90px;
+	z-index: 3;
 
 }
 
 main-content div img{
 	position: relative;
-	display: inline-block;
 	height: 100px;
 
 	margin: 0 auto;
 	text-align: center;
 	cursor: pointer;
 	transition: 0.3s;
+	z-index: 3;
 }
 
 main-content div img:hover{
 	opacity: 0.5;
 }
 
-img.main_window{
+canvas.main_window{
 	position: relative;
 	display: block;
 
 	margin: 0 auto;
 	top: 100px;
-	width: 615px;
+	height: auto;
+	z-index: 2;
 }
 
 main-content div.input{
@@ -58,7 +60,7 @@ main-content div.input{
 
 	text-align: center;
 	margin: 0 auto;
-	top: 100px;
+	top: 110px;
 }
 
 main-content input[type=text]{

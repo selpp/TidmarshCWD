@@ -28,18 +28,20 @@
 		<div class="titre">Camera from USA</div>
 
 		<div class="list_picture">
+
 			<img id="cat" src="picture/cat.jpg" alt="cat" onclick="TakeMain('cat')">
 			<img id="digital" src="picture/digital.jpg" alt="digital" onclick="TakeMain('digital')">
 			<img id="hacker" src="picture/hacker.jpg" alt="hacker" onclick="TakeMain('hacker')">
 			<img id="phone" src="picture/phone.jpg" alt="phone" onclick="TakeMain('phone')">
 		</div>
 		
-		<img id="main_picture" src="picture/cat.jpg" class="main_window" >
-
+		<canvas id="main_picture" class="main_window" width="0" height="0"></canvas>
+		
 		<div class="input">
 
 			<input id="saisie_text" type="text" name="url" placeholder="New url">
-			<input type="button" name="load" value="Load" onclick="getElementById('main_picture').src = getElementById('saisie_text').value">
+			<input type="button" name="load" value="Load" onclick="ModifyImageFromURL(getElementById('saisie_text').value)">
+			<input type="button" name="test" value="test" onclick="ModifyImageFromArray('main_picture', ArrayInput())">
 
 		</div>
 	</main-content>
