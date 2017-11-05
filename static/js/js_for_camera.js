@@ -52,30 +52,36 @@ function ArrayInput(){
 		}
 	}
 
+	for (var i = 0; i<100; i++) {
+		for (var j = 0; j<150; j++) {
+			ArrayReturned[i][j] = [255,0,0,255];
+		}
+	}
+
+
 	return ArrayReturned;
 }
 
 function ModifyImageFromArray(IdOfImage, arr){
 
 	var ImaWidth = document.getElementById(IdOfImage).width;
-	var ArrayWidth = arr.length;
-	var ArrayHeigth = arr[0].length;
+	var ArrayHeigth = arr.length;
+	var ArrayWidth = arr[0].length;
 	var c = document.getElementById(IdOfImage);
 	var ctx = c.getContext('2d');
 	var imgData = ctx.createImageData(ArrayWidth, ArrayHeigth);
 
 	var i;
-	var x=0;
+	var x=1;
 	var y=0;
 	for (i=0; i<imgData.data.length; i+=4) {
-		if (x==ArrayWidth) {
-			x=0;
+		if (x==ArrayWidth+1) {
+			x=1;
 			y++;
 		}
-
-    	imgData.data[i+0] = arr[x][y][0];
-    	imgData.data[i+1] = arr[x][y][1];
-    	imgData.data[i+2] = arr[x][y][2];
+    	imgData.data[i+0] = arr[y][ArrayWidth - x][0];
+    	imgData.data[i+1] = arr[y][ArrayWidth - x][1];
+    	imgData.data[i+2] = arr[y][ArrayWidth - x][2];
     	imgData.data[i+3] = 255;
     	x++;
 	}
