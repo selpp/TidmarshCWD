@@ -1,0 +1,6 @@
+connect 127.0.0.1 local
+cwp printer printjob
+connectcycle gpu
+cwp streamer streamerjob
+plug streamer printer
+data streamer input.mp4
