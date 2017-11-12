@@ -21,6 +21,7 @@ from time import sleep
 import traceback
 import numpy as np
 from time import time
+import json
 
 
 #from tensorflow.python.client import device_lib
@@ -157,12 +158,13 @@ class Worker(SupervisedProcess):
             data = self.pullData()
             if(type(data) == type(None) and self.job.requireData()):
                 if(time() - self.startTime > self.processMinTime):
+                    debug("NoneData Processing time exceeded", 2)
                     break
-            
-            debug("Data: "+str(data), level= 3) #Early debug
-            
-            r = self.job.loop(data)
-            if(type(r) != type(None) and self.callBackQueue != None):
+                continue
+            else:
+                r = self.job.loop(data)
+                
+            if(type(r) != type(None) and self.callBackQueue != None):                
                 try:
                     self.callBackQueue.put(r)
                 except Full: #should never be raised anyway
@@ -170,7 +172,7 @@ class Worker(SupervisedProcess):
                 
 
         self.stop()
-        print("exiting worker normally")
+        debug("exiting worker normally", 2)
 
     def stop(self):
         self.job.destroy()
@@ -197,13 +199,23 @@ class RemoteWorkerPool:
         
     def feedData(self, data): 
         debug("[NETWORK] Feeding data to remote WP: "+str(self.connection), 3)
-        if(isinstance(data, np.ndarray)):
+        
+        if(isinstance(data, np.ndarray)): #just a simple image packet
             pck = network.createImagePacket(data)
+            pck["data"] = None
         else:
-            pck = network.Packet()
-            pck.setType(network.PACKET_TYPE_DATA)
-            pck["data"] = data
             
+            if(type(data) == type( () ) and isinstance(data[1], np.ndarray)):
+                #tuple (stuff, nparray) expected
+                pck = network.createImagePacket(data[1])
+                pck["data"] = json.dumps(data[0])
+            
+            else:
+                #no np array is expected, blind json dump
+                pck = network.Packet()
+                pck.setType(network.PACKET_TYPE_DATA)
+                pck["data"] = json.dumps(data)
+ 
         pck["target"] = self.identifier
         self.connection.send(pck)
     
@@ -268,6 +280,7 @@ class WorkerPool(object):
             pool.shutdown()
 
     def feedData(self, data):
+        #no type check on local wp
         self.checkPoolState()
         self.dataQueue.put(data)
 
@@ -401,7 +414,7 @@ class WorkerPool(object):
 
     def _doTransfer(self):
         while self.running:
-            val = self.resultQueue.get() #we don't care if blocked
+            val = self.resultQueue.get() #disregarding the blocking phase
             for plugged in self._plugged:
                 try:
                     plugged.feedData(val)

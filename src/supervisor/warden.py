@@ -276,7 +276,17 @@ def wardenNetworkCallback(nature, data, conn = None):
             return
         
         debug("[WARDEN] Got data for WP "+targetWorker, 2)
-        wps[targetWorker].feedData(img if not type(img) == type(None) else data["data"]) #pass image or byte directly
+        
+        if(type(img) == type(None)):
+            d = data["data"]
+        else:
+            if(data["data"] == None):
+                d = img
+            else:
+                d = (json.loads(data["data"]), img)
+                
+        #img if not type(img) == type(None) else data["data"]
+        wps[targetWorker].feedData(d) #pass image or byte directly
         return
     
     if(nature == network.PACKET_TYPE_PLUG_REQUEST): #request to plug a wp to another
@@ -421,7 +431,7 @@ def startupWarden():
     setAutoName()
     setTags()
     nethandler = network.NetworkHandler(network.OBJECT_TYPE_WARDEN, warden_name, wardenNetworkCallback)
-    debug("[WARDEN] Started NetHandler")
+
 
 def _cmdExec():
     while True:

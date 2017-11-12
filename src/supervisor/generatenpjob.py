@@ -9,9 +9,18 @@ import numpy as np
 
 class generatenpjob(Job):
     
+    def setup(self):
+        self.a = 0
     
     def loop(self, data):
-        return np.random.randint(0, 255, size = (1280, 1080, 3))
+        self.a += 1
+        
+        if(self.a > 100):
+            self.shouldExit = True
+            return None
+        
+        return ( {"a": "issou"}, np.random.randint(0, 255, size = (1280, 1080, 3)))
+    
     
     def requireData(self):
         return False

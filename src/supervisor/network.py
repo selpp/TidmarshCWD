@@ -29,6 +29,7 @@ NATURE_UDP_HANDSHAKE            = "udp_handshake"
 NATURE_CONNECTION_OPEN          = "connection_open"
 NATURE_CONNECTION_CLOSED        = "connection_closed"
 NATURE_ERROR                    = "error"
+
 PACKET_TYPE_UNDEFINED           = "undefined"
 PACKET_TYPE_WARDEN_STATS        = "warden_stats"
 PACKET_TYPE_PLUG_REQUEST        = "plug_request"
@@ -42,6 +43,8 @@ PACKET_TYPE_CONNECTION_CLOSE    = "disconnect"
 #PACKET_TYPE_WP_OVERLOAD
 #PACKET_TYPE_WP_EMPTY
 #PACKET_TYPE_JOB_FILE 
+
+CONNECTION_CONTROL = [NATURE_CONNECTION_CLOSED, NATURE_CONNECTION_OPEN, NATURE_ERROR, NATURE_UDP_HANDSHAKE]
 
 '''
 Create a Packet holding the image provided as numpy.ndarray
@@ -128,15 +131,13 @@ class NetworkHandler:
             '''
             
             print("[NETWORK] Object type is WARDEN")
+            self._startManagementThread(self._listen)
+            print("[NETWORK] Sending broadcast in 1 sec")
+            time.sleep(1)
+            
             sendUDPHandshake(identifier)
             Thread(target = listenForUDPHandshake, args=[self]).start()
             
-            tgt = self._listen
-            
-
-        self._startManagementThread(tgt)
-
-
     def stop(self):
         self.isRunning = False
 
@@ -367,14 +368,13 @@ class Connection:
     def _mgmTgt(self):
         while(self.isRunning):
             try:
-
-                p = Packet()
-                p.read(self.txtChan, self.dataChan)
-
+                p = self._receive()
                 self.callback(p.getType(), p, conn = self)
-            except ConnectionAbortedError:
-                return
-            except Exception as e:
+            except ConnectionAbortedError: #interrupted
+                break               #mgmt abort
+            except JSONDecodeError:        #read error, happens when connectoin reset
+                break               #mgmt abort
+            except Exception as e:  #other exception are reported to the callback
                 if(not self.isRunning):
                     break
                 #if(_DEBUG_LEVEL > 1):
@@ -383,7 +383,8 @@ class Connection:
                 if(not r is None and r):
                     break
         
-        self.sockObj.close()        
+        if(not self.isclosed()):
+            self.sockObj.close()        
         self.callback(NATURE_CONNECTION_CLOSED, None, conn = self)
         
     def _receive(self):
@@ -414,6 +415,9 @@ class Connection:
 
 
     def close(self):
+        if(self.isclosed()):
+            return
+        
         print("[NETWORK] Closing Connection to "+str(self.addr))
         clos = Packet()
         clos.setType(PACKET_TYPE_CONNECTION_CLOSE)

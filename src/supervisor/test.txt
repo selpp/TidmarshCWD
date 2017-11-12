@@ -1,6 +1,8 @@
-connect 127.0.0.1 local
+cae
+cc gpu w1
+cwp streamer generatenpjob
+connect local
 cwp printer printjob
-connectcycle gpu
-cwp streamer streamerjob
 plug streamer printer
+connect w1
 data streamer input.mp4

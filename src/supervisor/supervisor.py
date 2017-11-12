@@ -13,6 +13,7 @@ import random
 import numpy as np
 from worker import _DEBUG_LEVEL
 from multiprocessing import Queue
+from queue import Empty
 
 
 
@@ -87,10 +88,20 @@ class Warden:
         
         self.connection.send(pck)
     
+def purgeNetworkQueue():
+    global packetQueue
+    
+    try:
+        while True:
+            packetQueue.get_nowait()
+    except Empty:
+        pass    
+
 def holdForPacket(n=1):
     global packetQueue
     
-    print("waiting")
+    #purgeNetworkQueue()
+    print("waiting for "+str(n))
     for i in range(n):
         packetQueue.get(True)
     print("resuming")
@@ -98,6 +109,12 @@ def holdForPacket(n=1):
 def notifyPacketReception():
     global packetQueue
     packetQueue.put('', True)
+    
+def network_connection_closed(data, conn = None):
+    pass    
+
+def network_connect_open(data, conn = None):
+    pass
     
 def network_auth(data, conn = None):
     global warden
@@ -125,15 +142,16 @@ def network_warden_stats(data, conn = None):
     
     wid = data["name"]
     
-    wp = json.loads(data["wp"])
+    wp = json.loads(data["wp"])["self"]
     for w in wp:
         workerpools[w] = wid # if a workerpool with this name already exists it is rewritten
                              # care should be taken in the script files
                              
     wa = json.loads(data["warden"])
     networkmap.clear()
-    for wid in wa:
-        networkmap[wid] = literal_eval(wa[wid])[0]
+    networkmap[wid] = "self"
+    for w in wa:
+        networkmap[w] = literal_eval(wa[w])[0]
     
     wt = json.loads(data["tags"])
     for tag in wt:
@@ -167,7 +185,9 @@ def supervisorNetworkCallback(nature, data, conn = None):
     try:
         a = getattr(__main__, "network_"+str(nature))
         a(data, conn)
-        notifyPacketReception()
+        
+        if(not nature in network.CONNECTION_CONTROL):
+            notifyPacketReception()
     except AttributeError:
         print("NO SUCH NETWORK METHOD "+nature)
         traceback.print_exc()    
@@ -204,7 +224,7 @@ def cycle_through(wlist):
     
     return None
 
-def cmd_connectcycle(tag = "", alias = None, crit = False):
+def cmd_cc(tag = "", alias = None, crit = False): # Cycle Connection (connect to a warden with the given tag)
     global networkmap
     global wardentags
     global networkmap
@@ -238,6 +258,9 @@ def cmd_connect(addr="127.0.0.1", alias=None):
     global networkmap
     global warden
     
+    if(addr in networkmap and networkmap[addr] == "self"): #we are already connected to this warden
+            return
+    
     if(warden != None):
         cmd_disconnect()
     
@@ -245,7 +268,7 @@ def cmd_connect(addr="127.0.0.1", alias=None):
         addr = aliases[addr]
         print("[SUPERVISOR] Resolved alias name to "+str(addr))
         
-    if(addr in networkmap):
+    if(addr in networkmap):       
         wid = addr
         addr = networkmap[addr]
         print("[SUPERVISOR] Warden name "+str(wid)+" resolved to "+str(addr))
@@ -268,7 +291,10 @@ def cmd_connect(addr="127.0.0.1", alias=None):
 def cmd_winfo():
     global warden
      
-    print(warden.wid)
+    if(warden != None):
+        print("Current warden is : "+str(warden.wid))
+    else:
+        print("No warden connected")
 
 
 def cmd_call(script):
@@ -280,15 +306,23 @@ def cmd_call(script):
     
     execScript(script)
     scriptdepth -= 1
+    
+def cmd_exit():
+    exit(0)
 
-def cmd_plug(sourceWP, targetWP, targetWarden = "self"):
+def cmd_plug(sourceWP, targetWP, targetWarden = None):
     global workerpools
+    global warden
 
-    if(sourceWP in workerpools):
-        connect(workerpools[sourceWP])
+    if(sourceWP in workerpools and sourceWP != warden.wid):
+        cmd_connect(workerpools[sourceWP])
+    
+    if(targetWP in workerpools and targetWarden == None):
+        targetWarden = workerpools[targetWP]
+        print("Warden for WP "+targetWP+" is "+targetWarden)
     
     warden.plugWP(sourceWP, targetWarden, targetWP)
-    holdForPacket()
+    holdForPacket(2)
 
 def cmd_explore():
     '''
@@ -306,9 +340,15 @@ def cmd_explore():
     
     store = warden.wid
     
+    explored = []
+    
     for wid in networkmap:
+        if(wid in explored):
+            continue
+        
         cmd_printdebug()
         cmd_connect(wid)
+        explored.append(wid)
     
     cmd_connect(store)
    
@@ -316,10 +356,12 @@ def cmd_printdebug():
     global networkmap
     global wardentags
     global packetQueue
+    global workerpools
     
     print(str(networkmap))
+    print(str(workerpools))
     print(str(wardentags))
-    print(str(len(packetQueue)))
+    print(str(packetQueue.qsize()))
 
 def cmd_stats():
     warden.requestStats()
@@ -328,9 +370,9 @@ def cmd_stats():
 def cmd_stop():
     warden.stop()
     
-def cmd_cwp(name, jobName, maxWorkers = 8, workerAmount = 0):
+def cmd_cwp(name, jobName, maxWorkers = 8, workerAmount = 0): # Create Worker Pool
     warden.startWP(name, jobName, maxWorkers, workerAmount)
-    holdForPacket()
+    holdForPacket(2)
     
 def cmd_disconnect():
     global warden
@@ -339,6 +381,10 @@ def cmd_disconnect():
         warden.connection.close()
     
     warden = None
+    
+def cmd_cae(addr="127.0.0.1", alias="local"): # Connect And Explore
+    cmd_connect(addr, alias)
+    cmd_explore()
     
 def cmd_data(wpName, *args):
     global warden
@@ -356,6 +402,9 @@ def cmd_data(wpName, *args):
     for i in args:
         data += i+" "
     warden.feedData(wpName, data)
+    
+def cmd_slapthedev():
+    print("SPANK SPANK! Make something that works! (°...° )")
   
 def cmd_testbin():
     global warden
@@ -367,7 +416,8 @@ def cmd_testbin():
 
 def execReq(cmd):
     global warden
-    
+    if(cmd == None or cmd.strip() == ""):
+        return
     c = cmd.split(" ")
     a = getattr(__main__, "cmd_"+c[0])
     a(*c[1:])
@@ -392,6 +442,6 @@ if(__name__ == "__main__"):
     while True:
         inp = input(">>> ")
         handleCommand(inp)
-       
-       
-       
+        
+        
+        
