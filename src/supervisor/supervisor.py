@@ -26,6 +26,7 @@ workerpools = {}
 wardentags  = {}
 scriptdepth = 0
 packetQueue = Queue()
+errThrow = 0
 
 class ScriptFatalError(BaseException):
     pass
@@ -88,27 +89,22 @@ class Warden:
         
         self.connection.send(pck)
     
-def purgeNetworkQueue():
-    global packetQueue
-    
-    try:
-        while True:
-            packetQueue.get_nowait()
-    except Empty:
-        pass    
+
 
 def holdForPacket(n=1):
     global packetQueue
     
     #purgeNetworkQueue()
     print("waiting for "+str(n))
+    l = []
     for i in range(n):
-        packetQueue.get(True)
+        l.append(packetQueue.get(True))
     print("resuming")
+    return l[0] if len(l) == 1 else l
     
-def notifyPacketReception():
+def notifyPacketReception(p):
     global packetQueue
-    packetQueue.put('', True)
+    packetQueue.put(p, True)
     
 def network_connection_closed(data, conn = None):
     pass    
@@ -187,14 +183,19 @@ def supervisorNetworkCallback(nature, data, conn = None):
         a(data, conn)
         
         if(not nature in network.CONNECTION_CONTROL):
-            notifyPacketReception()
+            notifyPacketReception(data)
     except AttributeError:
         print("NO SUCH NETWORK METHOD "+nature)
         traceback.print_exc()    
     except BaseException:
         traceback.print_exc()
         
+def _checkAndRaise(msg="Error in program"):
+    global errThrow
     
+    print(msg, file = sys.stderr)
+    if(errThrow):
+        raise ScriptFatalError()
     
 def execScript(path):
     try:
@@ -252,18 +253,17 @@ def cmd_cc(tag = "", alias = None, crit = False): # Cycle Connection (connect to
     
     return 
 
+def cmd_errthrow(typ=0):
+    print("ErrThrow set to "+str(typ))
+    errThrow = typ
+
 def cmd_connect(addr="127.0.0.1", alias=None):
     global nethandler
     global aliases
     global networkmap
     global warden
     
-    if(addr in networkmap and networkmap[addr] == "self"): #we are already connected to this warden
-            return
-    
-    if(warden != None):
-        cmd_disconnect()
-    
+
     if(addr in aliases):
         addr = aliases[addr]
         print("[SUPERVISOR] Resolved alias name to "+str(addr))
@@ -272,7 +272,14 @@ def cmd_connect(addr="127.0.0.1", alias=None):
         wid = addr
         addr = networkmap[addr]
         print("[SUPERVISOR] Warden name "+str(wid)+" resolved to "+str(addr))
-        
+       
+    if(warden != None and (warden.connection.getAdress() == addr or addr == "self")):
+        print("Already connected to this warden")
+        return
+       
+    if(warden != None):
+        cmd_disconnect()
+     
     print("[SUPERVISOR] Connecting to: "+str(addr))
     try:
         warden = Warden()
@@ -322,7 +329,12 @@ def cmd_plug(sourceWP, targetWP, targetWarden = None):
         print("Warden for WP "+targetWP+" is "+targetWarden)
     
     warden.plugWP(sourceWP, targetWarden, targetWP)
-    holdForPacket(2)
+    p = holdForPacket()
+    if(p["status"] != "OK"):
+        _checkAndRaise("Could not plug WP")
+    else:
+        holdForPacket()
+    
 
 def cmd_explore():
     '''
@@ -351,6 +363,7 @@ def cmd_explore():
         explored.append(wid)
     
     cmd_connect(store)
+    print("Completed exploration")
    
 def cmd_printdebug():
     global networkmap
@@ -372,7 +385,12 @@ def cmd_stop():
     
 def cmd_cwp(name, jobName, maxWorkers = 8, workerAmount = 0): # Create Worker Pool
     warden.startWP(name, jobName, maxWorkers, workerAmount)
-    holdForPacket(2)
+    
+    p = holdForPacket()
+    if(p["status"] != "OK"):
+        _checkAndRaise("Could not create WP")
+    else:
+        holdForPacket()
     
 def cmd_disconnect():
     global warden

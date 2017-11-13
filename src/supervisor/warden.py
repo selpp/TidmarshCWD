@@ -128,7 +128,7 @@ def requestWardenInfo(wid):
     pck = network.Packet()
     pck.setType(network.PACKET_TYPE_WARDEN_STATS)
     conn.send(pck)
-    
+
 def sendStatusPacket(conn, sts, typ):
     pck = network.Packet()
     pck.setType(typ)

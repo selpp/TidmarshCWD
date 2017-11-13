@@ -115,6 +115,8 @@ class NetworkHandler:
 
         self.mgmThread = None
         self.isRunning = True
+        
+        self.server = None
 
         self.connections = [] #Array of Connections this Handler manages
 
@@ -140,6 +142,8 @@ class NetworkHandler:
             
     def stop(self):
         self.isRunning = False
+        if(self.server != None):
+            self.server.close()
 
     def broadcast(self, pck):
         self._cleanConnList()
@@ -168,7 +172,7 @@ class NetworkHandler:
         '''
 
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
+        #server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         server.bind(('', PORT))
         server.listen()
 
@@ -193,6 +197,10 @@ class NetworkHandler:
     def _initConn(self, cr):
         self.connections.append(Connection(cr, self.callbackFunc, self))
 
+    def _closeAll(self):
+        for c in self.connections:
+            c.close()
+        
 
     def _startManagementThread(self, tgt):
         '''
@@ -308,13 +316,6 @@ class Packet:
         binChan.flush()
         return
     
-        #OLD sending method        
-        txtChan.write(s)
-        txtChan.flush()
-
-        if(not self.binObj is None):
-            binChan.write(self.binObj)
-            binChan.flush()
 
 
 class Connection:
@@ -346,6 +347,9 @@ class Connection:
         pck["objType"] = objType
         pck["id"] = iden
         self.send(pck)
+        
+    def getAdress(self):
+        return str(self.addr[0])
 
     def __str__(self):
         return str(self.addr) # +" f="+str(self.sockObj.fileno())
@@ -415,9 +419,10 @@ class Connection:
 
 
     def close(self):
-        if(self.isclosed()):
+        if(not self.isRunning or self.isclosed()):
             return
         
+        self.isRunning = False
         print("[NETWORK] Closing Connection to "+str(self.addr))
         clos = Packet()
         clos.setType(PACKET_TYPE_CONNECTION_CLOSE)

@@ -1,6 +1,6 @@
 cae
 cc gpu w1
-cwp streamer generatenpjob
+cwp streamer streamerjob
 connect local
 cwp printer printjob
 plug streamer printer
