@@ -28,6 +28,7 @@ import worker
 from worker import RemoteWorkerPool
 from builtins import issubclass
 from json import JSONEncoder
+import platform
 
 
 nethandler = None
@@ -41,7 +42,10 @@ workerpools = {
 
 
 def handleExit():
-    nethandler.stop()
+    global nethandler
+    
+    if(nethandler != None):
+        nethandler.stop()
     
 def sendWardenStats(conn):    
     global wtags
@@ -427,6 +431,7 @@ def startupWarden():
     print("============================================================")
     print("Starting TidCam WARDEN (pid="+str(os.getpid())+")")
     print("The log level is "+str(_DEBUG_LEVEL)+ " ("+_DEBUG_DICT[_DEBUG_LEVEL]+")")
+    print("Python version is "+platform.python_version())
     print("============================================================")
     setAutoName()
     setTags()
