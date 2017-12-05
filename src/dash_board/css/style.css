@@ -1,0 +1,132 @@
+body {
+	margin: 0;
+	padding: 0;
+}
+
+/* ================ MENU ================ */
+
+.Menu {
+	width: 100%;
+	height: 50px;
+	background-color: dimgrey;
+	color: white;
+	font-weight: bold;
+    float: left;
+}
+
+.Menu ul {
+	padding: 0;
+	margin: 0;
+	list-style: none;
+	clear: both;
+}
+
+.Menu ul li {
+	float: left;
+	display: inline-block;
+	width: 100px;
+	height: 50px;
+	line-height: 50px;
+	text-align: center;
+	cursor: pointer;
+	transition: 0.4s;
+}
+
+.Menu ul li:hover {
+	background-color: darkorange;
+}
+
+.Menu label {
+	cursor: pointer;
+	width: 100px;
+	height: 50px;
+}
+
+.Menu .Input {
+	position: absolute;
+	width: 100px;
+	height: 50px;
+	top: 0; 
+	left: 0;
+	opacity: 0;
+	cursor: pointer;
+}
+
+/* ============== CONTENT ============== */
+
+.Content {
+    position: relative;
+    left: 0;
+    width: 100%;
+    height: auto;
+    min-height: 300px;
+    color: darkgrey;
+    overflow: hidden;
+    width: 100%;
+}
+
+.Content #drop_zone {
+    top: 0;
+    left: 0;
+    height: 100vh;
+}
+
+.Content .Config {
+    top: 0;
+    left: 0;
+    height: auto;
+}
+
+/* ============= BOX ================== */
+
+.Header {
+    height: 25px;
+    padding: 10px;
+    background-color: dimgrey;
+    color: white;
+    line-height: 25px;
+    border-radius: 15px 15px 0 0;
+}
+
+.Cluster {
+    margin: 50px auto;
+    width: 400px;
+    background-color: #f2f2f2;
+    border-radius: 20px;
+    box-shadow: 10px 10px 15px #e5e5e5;
+}
+
+.Unit {
+    margin: 20px auto;
+    width: 300px;
+    background-color: #f2f2f2;
+    border-radius: 20px;
+    box-shadow: 10px 10px 15px #e5e5e5;
+}
+
+.BoxContent {
+    padding: 10px;
+}
+
+.UnitInfos {
+    padding: 10px;
+}
+
+.ClusterInfos {
+    padding: 10px;
+}
+
+.JobInfos {
+    padding: 10px;
+}
+
+.UnitJobs {
+    padding: 10px;
+}
+
+.UnitJob {
+    margin: 20px auto;
+    width: 150px;
+    border-radius: 20px;
+    box-shadow: 10px 10px 15px #e5e5e5;
+}

@@ -1,0 +1,66 @@
+{
+  "supervisorport":55555,
+
+
+  "units": [
+    {
+      "name":"local",
+      "address":"127.0.0.1"
+    },
+
+    {
+      "name":"pc-yliess",
+      "address":"10.1.68.189"
+    }
+
+
+
+  ],
+
+  "workers": {
+
+    "pc-yliess": [
+      {
+        "workername" : "boxer",
+        "port":	25224,
+        "jobname": "boxerjob",
+        "debuglevel": 3,
+        "outputmethod":"duplicate",
+        "debuglevel": 2,
+        "output": [
+          "printer"
+        ]
+      }
+    ],
+
+    "local": [
+
+      {
+        "workername" : "streamer",
+        "port":	25224,
+        "jobname": "generatenpjob",
+        "jobdata": "input.mp4",
+        "debuglevel": 3,
+        "outputmethod":"duplicate",
+        "debuglevel": 2,
+        "output": [
+          "boxer"
+        ]
+      },
+
+      {
+        "workername" : "printer",
+        "port":	25223,
+        "jobname": "printjob",
+        "debuglevel": 2
+      }
+
+    ]
+
+
+
+
+  }
+
+
+}
